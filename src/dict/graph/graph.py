@@ -23,5 +23,8 @@ class graph:
     def get_children(self, id):
         return self.nodes[id].children
 
+    def get_parent(self, id):
+        return self.nodes[id].parent
+
     def get_label(self, id):
         return self.nodes[id].label
