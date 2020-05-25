@@ -11,3 +11,7 @@ class Relationship_not_found(Error):
 class Relationship_duplicated(Error):
     pass
 
+class Key_Missing(Error):
+    pass
+
+

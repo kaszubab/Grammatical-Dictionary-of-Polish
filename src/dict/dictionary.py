@@ -1,12 +1,15 @@
 import marisa_trie
 import codecs
 import typing
+import itertools
 import src.dict.subclasses.graph as gr
+import src.dict.subclasses.multisegmented as mlt
 import src.dict.subclasses.exceptions as ex
 
 class Dictionary():
     def __init__(self, basic_files, multi_segment_files):
         try:
+            self.multisegmented = mlt.multisegmented_module()
             keys = []
             values = []
             last_ind = 0
@@ -39,19 +42,99 @@ class Dictionary():
 
                     lexem_id = self.main_trie[tmp[2]][shift_dict[trie_main_id]][0]
                     shift_dict[trie_main_id] += 1
+
                     self.word_graph.add_vertex(lexem_id, tmp[1])
                     self.translation_array[lexem_id] = self.reverse_trie[tmp[2]]
 
-                    for word in tmp[3:-1]:
+                    adjective = False
+                    adjective_id = -1
+                    if tmp[1].strip("*")[0] == "C":
+                        adjective = True
+                        adjective_id = child_id
+
+                    for idx,word in enumerate(tmp[3:-1]):
                         if word != "##":
                             trie_main_id = self.main_trie.get(word)[0]
                             if trie_main_id not in shift_dict:
                                 shift_dict[trie_main_id] = 0
                             child_id = self.main_trie[word][shift_dict[trie_main_id]][0]
+
+                            if adjective and (idx + 1) % 7 == 0:
+                                adjective_id = child_id
+
                             shift_dict[trie_main_id] += 1
                             self.word_graph.add_vertex(child_id, None)
                             self.word_graph.add_edge(lexem_id, child_id)
+
+                            if adjective and (idx + 1) % 7 != 0:
+                                self.word_graph.add_gender_edge(adjective_id, child_id)
+
                             self.translation_array[child_id] = self.reverse_trie[word]
+
+
+    def add_multisegmented(self, files):
+        for file in files:
+            with codecs.open(file, "r", encoding="utf8") as f:
+                for line in f.readlines():
+                    tokens = [x.strip() for x in line.split(";")[:-1]]
+                    inter = None
+                    if tokens[3] != "":
+                        inter = [int(tokens[3][0]), int(tokens[3][1])]
+                    stable_list = []
+                    for char in tokens[1]:
+                        if char == "*":
+                            stable_list.append(False)
+                        if char == "-":
+                            stable_list.append(True)
+                    segment = tokens[0].split(" ")
+                    segment_lst = []
+                    for seg in segment:
+                        if "*" in seg:
+                            continue
+                        possible_ids = self.main_trie.get(seg, default=None)
+
+                        if possible_ids is None:
+                            raise ex.Key_Missing
+
+
+                        for word_id in possible_ids:
+                            if self.word_graph.has_gender(word_id[0]) and self.word_graph.get_gender_parent(word_id[0]) is not None:
+                                continue
+                            segment_lst.append(word_id[0])
+                            break
+                    key_tuple = tuple(segment_lst)
+                    self.multisegmented.add_multisegmented(key_tuple, stable_list, inter)
+
+    def get_parent_multisegmented(self, multi_word):
+
+        possible_ids_list = []
+        for word in multi_word:
+            possible_ids = self.main_trie.get(word, default=None)
+
+            if possible_ids is None:
+                raise ex.Key_Missing
+
+            parents = {self.word_graph.get_gender_parent(x[0]) for x in possible_ids if self.word_graph.has_gender(x)}
+            parents.update({self.word_graph.get_parent(x[0]) for x in possible_ids if not self.word_graph.has_gender(x)})
+            possible_ids_list.append(parents)
+
+        all_combinations = itertools.product(*possible_ids_list)
+        for combination in all_combinations:
+            if self.multisegmented.is_multisegmented(combination):
+                translated_ids = [self.translation_array[x] for x in combination]
+                return "".join([self.reverse_trie.restore_key(x) for x in translated_ids]), self.multisegmented.get_multitsegmented_info(combination)
+
+
+
+
+
+
+
+
+
+
+
+
 
     def get_children(self, word: str) -> typing.List[str]:
 
