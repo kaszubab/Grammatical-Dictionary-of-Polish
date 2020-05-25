@@ -7,7 +7,7 @@ import src.dict.subclasses.multisegmented as mlt
 import src.dict.subclasses.exceptions as ex
 
 class Dictionary():
-    def __init__(self, basic_files, multi_segment_files):
+    def __init__(self, basic_files):
         try:
             self.multisegmented = mlt.multisegmented_module()
             keys = []
@@ -74,8 +74,9 @@ class Dictionary():
 
     def add_multisegmented(self, files):
         for file in files:
-            with codecs.open(file, "r", encoding="utf8") as f:
+            with open(file, "r") as f:
                 for line in f.readlines():
+                    print(line)
                     tokens = [x.strip() for x in line.split(";")[:-1]]
                     inter = None
                     if tokens[3] != "":
@@ -125,17 +126,6 @@ class Dictionary():
                 return "".join([self.reverse_trie.restore_key(x) for x in translated_ids]), self.multisegmented.get_multitsegmented_info(combination)
 
 
-
-
-
-
-
-
-
-
-
-
-
     def get_children(self, word: str) -> typing.List[str]:
 
         word_id = self.main_trie.get(word)[0][0]
@@ -152,6 +142,10 @@ class Dictionary():
         check_also = [x[0] for x in self.main_trie.get(word)[1:]]
 
         parent_id = self.word_graph.get_parent(word_id)
+
+        if parent_id is None:
+            return None,None,None
+
         parent_word_id = self.translation_array[parent_id]
 
         parents = {self.word_graph.get_parent(x) for x in check_also}
@@ -160,13 +154,16 @@ class Dictionary():
         return self.reverse_trie.restore_key(parent_word_id), self.word_graph.get_label(parent_id),possible_matches
 
     def get_all_relationships(self):
-        return self.lexical_relationships.keys();
+        return list(self.lexical_relationships.keys());
 
     def __add_new_relationship__(self, relationship_name):
         rel_name = relationship_name.lower()
         if rel_name in self.lexical_relationships.keys():
             raise ex.Relationship_exists("Relationship {} already exists and as such cannot be added", relationship_name)
-        max_ind = max(self.lexical_relationships.values())
+        if len(self.lexical_relationships.keys()):
+            max_ind = max(self.lexical_relationships.values())
+        else:
+            max_ind = 0
         self.lexical_relationships[relationship_name] = max_ind+1
 
     def add_gradation_relationship(self, file):
@@ -176,22 +173,25 @@ class Dictionary():
         hr - stands for 2 degree of gradation
         hst - stands for 3 degree of gradation
         """
-
         if "hr" not in self.lexical_relationships.keys():
             self.__add_new_relationship__("hr")
             self.__add_new_relationship__("hst")
 
         with codecs.open(file, "r", encoding="utf8") as f:
             for line in f.readlines():
+                print(line)
                 words = [word.strip() for word in line.split(":")[:-1]]
                 eq_degree = self.main_trie.get(words[0])[0]
+                if eq_degree is None:
+                    raise ex.Key_Missing
                 hr_degree = self.main_trie.get(words[1])[0]
+                if hr_degree is None:
+                    raise ex.Key_Missing
                 hst_degree = self.main_trie.get(words[2])[0]
-                self.word_graph.add_relationship_edge(eq_degree, hr_degree, self.lexical_relationships["hr"])
-                self.word_graph.add_relationship_edge(eq_degree, hst_degree, self.lexical_relationships["hst"])
-
-
-
+                if hst_degree is None:
+                    raise ex.Key_Missing
+                self.word_graph.add_relationship_edge(eq_degree[0], hr_degree[0], self.lexical_relationships["hr"])
+                self.word_graph.add_relationship_edge(eq_degree[0], hst_degree[0], self.lexical_relationships["hst"])
 
     def add_im_norm_relationship(self, file):
         """
@@ -249,9 +249,18 @@ class Dictionary():
         word_id = self.main_trie.get(word)[0][0]
         check_also = [x[0] for x in self.main_trie.get(word)[1:]]
         parent_id = self.word_graph.get_parent(word_id)
+        if parent_id is None:
+            parent_id = word_id
         parents = {self.word_graph.get_parent(x) for x in check_also}
 
-        rel_id = self.word_graph.get_word_by_relationship(parent_id, rel_index)
+        rel_id = self.word_graph.get_word_by_relationship(parent_id, rel_index)[0]
+        if rel_id is None:
+            for x in parents:
+                rel_id = self.word_graph.get_word_by_relationship(x, rel_index)[0]
+                if x is not None:
+                    break
+            if rel_id is None:
+                return None, None, None
         possible_rel_ids = {self.word_graph.get_word_by_relationship(x, rel_index) for x in parents}
 
         possible_ids = {self.translation_array[x] for x in possible_rel_ids if x != rel_id}

@@ -1,7 +1,6 @@
 class Error(Exception):
      pass
 
-
 class Relationship_exists(Error):
     pass
 
