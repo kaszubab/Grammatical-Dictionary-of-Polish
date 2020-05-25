@@ -41,7 +41,7 @@ class graph:
         if relationship_id not in self.nodes[from_v].relationships.keys():
             self.nodes[from_v].relationships[relationship_id]= []
 
-        if relationship_id not in self.nodes[from_v].relationships.keys():
+        if relationship_id not in self.nodes[to_v].relationships.keys():
             self.nodes[to_v].relationships[relationship_id]= []
 
         self.nodes[from_v].relationships[relationship_id].append(to_v)
@@ -66,4 +66,4 @@ class graph:
         return self.nodes[id].label
 
     def get_word_by_relationship(self, id, relationship_id):
-        self.nodes[id].relationships.get(relationship_id, default=None)
+        return self.nodes[id].relationships.get(relationship_id)
