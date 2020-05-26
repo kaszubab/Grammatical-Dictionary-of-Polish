@@ -145,6 +145,13 @@ class Dictionary:
         return children_strings
 
     def add_multisegmented(self, files):
+        """
+        Function that adds multisegment to dictionary
+
+            Args:
+                files ([str]): Array of files names with multisegments
+        """
+
         for file in files:
             with open(file, "r") as f:
                 for line in f.readlines():
@@ -182,6 +189,12 @@ class Dictionary:
                     self.multisegmented.add_multisegmented(key_tuple, stable_list, inter)
 
     def get_parent_multisegmented(self, multi_word):
+        """
+        Function that returns infinitive of multisegment
+
+            Args:
+                multi_word ([str]): Array of words in multisegment
+        """
 
         possible_ids_list = []
         for word in multi_word:
@@ -203,9 +216,27 @@ class Dictionary:
                                 translated_ids]), self.multisegmented.get_multitsegmented_info(combination)
 
     def get_all_relationships(self):
+        """
+        Function that returns all relationships name present in dictionary
+
+            Returns:
+                relationship_names (list(str)): List of relationships names
+        """
         return list(self.lexical_relationships.keys());
 
     def __add_new_relationship__(self, relationship_name):
+        """
+        Function that adds relationship name to dictionary
+
+            Args:
+                relationship_name (str): Name of relationship
+
+            Raises:
+                Relationship_exists
+
+            Returns:
+                None
+        """
         rel_name = relationship_name.lower()
         if rel_name in self.lexical_relationships.keys():
             raise ex.Relationship_exists("Relationship {} already exists and as such cannot be added",
