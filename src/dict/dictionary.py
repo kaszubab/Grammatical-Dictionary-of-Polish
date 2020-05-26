@@ -18,6 +18,16 @@ class Dictionary:
                             where:
                                 <flexographic label> is a sequence of capital letters,
                                                      optionally with an asterisk at the beginning
+                                                     Codes:
+                                                        *  - ambiguous word
+                                                        AA - noun (pl. rzeczownik męski osobowowy)
+                                                        AB - noun (pl. rzeczownik męski żywotny)
+                                                        AC - noun (pl. rzeczownik męski nieżywotny)
+                                                        AD - noun (pl. rzeczownik żeński itd)
+                                                        AF - noun (pl. rzeczownik nijaki)
+                                                        B  - verb
+                                                        C  - adjective
+                                                        F  - adverb
 
                                 <derivatives separeted with colon> are word forms arranged in a fixed order
                                                                    depending on the part of speech that is
