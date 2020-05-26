@@ -39,7 +39,7 @@ class Dictionary:
             main_trie (marisa_trie.RecordTrie):
             reverse_trie (marisa_trie.Trie):
             translation_array ([int]):
-            word_graph (gr.graph):
+            word_graph (gr.Graph):
     """
 
     def __init__(self, basic_files):
@@ -64,7 +64,7 @@ class Dictionary:
             print("File not found")
             raise
 
-        self.word_graph = gr.graph()
+        self.word_graph = gr.Graph()
         shift_dict = {}
         for file in basic_files:
             with codecs.open(file, "r", encoding="utf8") as f:

@@ -1,6 +1,6 @@
 import src.dict.subclasses.exceptions as ex
 
-class graph:
+class Graph:
     class graph_node:
         def __init__(self, label):
             self.label = label
