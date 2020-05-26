@@ -5,6 +5,7 @@ import itertools
 import src.dict.subclasses.graph as gr
 import src.dict.subclasses.multisegmented as mlt
 import src.dict.subclasses.exceptions as ex
+import pickle
 
 
 class Dictionary:
@@ -362,3 +363,31 @@ class Dictionary:
 
         return self.reverse_trie.restore_key(self.translation_array[rel_id]), \
                self.word_graph.get_label(rel_id), possible_matches
+
+    @staticmethod
+    def export_dict(dictionary, file: str):
+        """
+        Function that returns imported Dictionary object from file
+
+            Args:
+                dictionary (Dictionary): Dictionary object to export
+                file (str): Name of file to import from
+
+            Returns:
+                None
+        """
+
+        pickle.dump(dictionary, open(file, "wb"))
+
+    @staticmethod
+    def import_dict(file: str):
+        """
+        Function that returns imported Dictionary object from file
+
+            Args:
+                file (str): Name of file to import from
+
+            Returns:
+                dictionary (Dictionary): Imported dictionary object from file
+        """
+        return pickle.load(open(file, "rb"))
