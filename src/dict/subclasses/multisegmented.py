@@ -8,7 +8,7 @@ class multisegmented_module:
 
             if interchangeable is not None:
                 tmp = list(ids)
-                tmp[interchangeable[0]],tmp[interchangeable[1]] = tmp[interchangeable[1]],tmp[interchangeable[0]]
+                tmp[interchangeable[0]-1],tmp[interchangeable[1]-1] = tmp[interchangeable[1]-1],tmp[interchangeable[0]-1]
                 other_ids = tuple(tmp)
                 self.multisegmented[other_ids] = [stable_list, interchangeable]
 

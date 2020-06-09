@@ -71,6 +71,9 @@ class Graph:
         self.nodes[from_v].relationships[relationship_id].append(to_v)
         self.nodes[to_v].relationships[relationship_id].append(from_v)
 
+    def get_inflection(self, id):
+        return [self.nodes[id].gender, self.nodes[id].case]
+
     def get_children(self, id):
         return self.nodes[id].children
 
