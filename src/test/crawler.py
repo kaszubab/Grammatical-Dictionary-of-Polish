@@ -8,7 +8,11 @@ def create_test_file(filename, iterations=100):
     for i in range(1, iterations):
         entry = ""
         r = requests.get("http://sgjp.pl/edycja/ajax/inflection-tables/?lexeme_id=" + str(i) + "&variant=1")
-        if r.status_code != 403 and r.json()['result'] != "ok":
+
+        if not r.status_code == 200:
+            continue
+
+        if not r.json()['result'] == "ok":
             continue
 
         soup = BeautifulSoup(r.json()['html'], 'html.parser')
