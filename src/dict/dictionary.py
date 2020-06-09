@@ -284,7 +284,6 @@ class Dictionary:
                 possible_forms = []
                 stable = self.multisegmented.get_multitsegmented_info(combination)[0]
 
-                print(combination)
                 for combination_position,word_id in enumerate(combination):
                     if stable[combination_position]:
                         possible_forms.append([word_id])
@@ -293,7 +292,6 @@ class Dictionary:
 
                 children_forms = []
 
-                print(possible_forms)
                 for index in range(max([len(id_list) for id_list in possible_forms])):
                     single_form = []
                     current_flexion = None
@@ -316,12 +314,14 @@ class Dictionary:
                     children_forms.append(single_form)
 
                 translated_ids = [[self.translation_array[x] for x in combination] for combination in children_forms]
+                interchangeable = self.multisegmented.get_multitsegmented_info(combination)[1]
+                if interchangeable:
+                    changed_ids = [child.copy() for child in translated_ids]
+                    for list in changed_ids:
+                        list[interchangeable[0]-1],list[interchangeable[1]-1] = list[interchangeable[1]-1],list[interchangeable[0]-1]
+                    translated_ids += changed_ids
+
                 return [" ".join([self.reverse_trie.restore_key(x) for x in translated_ids_item]) for translated_ids_item in translated_ids]
-
-
-
-
-
 
     def get_all_relationships(self):
         """

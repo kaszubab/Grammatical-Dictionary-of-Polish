@@ -21,6 +21,7 @@ if __name__ == '__main__':
     print(dictionary.get_parent_multisegmented("albo Argusowi"))
 
     print(dictionary.get_children_multisegmented("albo Argus"))
+    print(dictionary.get_children_multisegmented("biały Argus"))
 
 
 

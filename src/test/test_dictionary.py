@@ -12,15 +12,14 @@ class DictionaryTests(unittest.TestCase):
 
     def test_get_parent(self):
         test_dict = dictionary.Dictionary(["test_data/test_file.txt"])
-        self.assertEqual(test_dict.get_parent("Gdański")[0], "Gdańsk")
-        self.assertEqual(test_dict.get_parent("Gdański")[1], "AA")
+        self.assertEqual(test_dict.get_parent("Gdańska")[0], "Gdańsk")
+        self.assertEqual(test_dict.get_parent("Gdańska")[1], "AA")
 
     def test_get_children(self):
         test_dict = dictionary.Dictionary(["test_data/test_file.txt"])
-        self.assertEqual(test_dict.get_children("Gdańsk"), ['Gdański', 'Gdańska', 'Gdańsków',
-                                                            'Gdańskowi', 'Gdańskom', 'Gdańsk',
-                                                            'Gdański', 'Gdańskiem', 'Gdańskami',
-                                                            'Gdańsku', 'Gdańskach', 'Gdańsku', 'Gdański'])
+        print(test_dict.get_children("Gdańsk"))
+        self.assertEqual(test_dict.get_children("Gdańsk"), ['Gdański', 'Gdańska', 'Gdańsków', 'Gdańskowi', 'Gdańskom',
+                         'Gdańsk', 'Gdański', 'Gdańskiem', 'Gdańskami', 'Gdańsku', 'Gdańskach', 'Gdańsku', 'Gdański'])
 
 
 if __name__ == '__main__':
