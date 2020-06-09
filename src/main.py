@@ -1,8 +1,8 @@
-import src.dict as dict
+import src.dict as inflections_dict
 
 if __name__ == '__main__':
 
-    dictionary = dict.Dictionary(["pospolite.txt"])
+    dictionary = inflections_dict.Dictionary(["pospolite.txt"])
     print(dictionary.get_children("pies"))
     print(dictionary.get_children("albo"))
     print(dictionary.get_children("biały"))
