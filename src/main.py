@@ -9,5 +9,9 @@ if __name__ == '__main__':
     print(dictionary.get_all_relationships())
     print(dictionary.get_parent("największy"))
     print(dictionary.get_word_by_relationship("hst", "największy"))
-    #dictionary.add_multisegmented(["WS_tylko_rzecz.txt"])
+    dictionary.add_multisegmented(["WS_test.txt"])
+
+    print(dictionary.get_parent_multisegmented("złej Apokalipsy"))
+    print(dictionary.get_parent_multisegmented("białego Argusa"))
+
 

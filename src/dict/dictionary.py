@@ -47,17 +47,26 @@ class Dictionary:
             self.multisegmented = mlt.multisegmented_module()
             keys = []
             values = []
-            last_ind = 0
+            last_index = 0
             for file in basic_files:
-                with codecs.open(file, "r", encoding="utf8") as f:
-                    new_keys = [x.strip() for y in f.readlines() for x in y.split(":")[2:-1] if x.strip() != "##"]
-                    keys += new_keys
-                    values += [(i + last_ind,) for i in range(len(new_keys))]
-                    last_ind += len(new_keys)
+                with codecs.open(file, "r", encoding="utf8") as openned_file:
+                    new_keys = []
+                    for line in openned_file:
+                        line_split = line.split(":")
+                        if line_split[1].strip("* ")[0] in ["C", "D"]:
+                            line_split = [line_split[0]] + line_split[3:9] + line_split[16:-3]
+                        else:
+                            line_split = [line_split[0]] + line_split[3:-1]
+                        new_keys += [token.strip() for token in line_split
+                                     if token.strip() != "##" and token.strip() != "#"]
 
-            fmt = "<H"
+                    keys += new_keys
+                    values += [(current_index + last_index,) for current_index in range(len(new_keys))]
+                    last_index += len(new_keys)
+
+            content_format = "<H"
             self.lexical_relationships = {}
-            self.main_trie = marisa_trie.RecordTrie(fmt, zip(keys, values))
+            self.main_trie = marisa_trie.RecordTrie(content_format, zip(keys, values))
             self.reverse_trie = marisa_trie.Trie(keys)
             self.translation_array = [-1 for i in range(len(keys))]
         except FileNotFoundError:
@@ -66,45 +75,63 @@ class Dictionary:
 
         self.word_graph = gr.Graph()
         shift_dict = {}
+        cases = [case for case in gr.Cases]
+        genders = [gender for gender in gr.Genders]
+
         for file in basic_files:
-            with codecs.open(file, "r", encoding="utf8") as f:
-                for line in f.readlines():
-                    tmp = [x.strip() for x in line.split(":")]
-                    trie_main_id = self.main_trie.get(tmp[2])[0]
+            with codecs.open(file, "r", encoding="utf8") as openned_file:
+                for line in openned_file.readlines():
+                    line_split = line.split(":")
+                    if line_split[1].strip("* ")[0] in ["C", "D"]:
+                        line_split = line_split[0:2] + line_split[3:9] + line_split[16:-3]
+                    else:
+                        line_split = line_split[0:2] + line_split[3:-1]
+                    print(line_split)
+                    tmp = [x.strip() for x in line_split]
+
+                    trie_main_id = self.main_trie.get(tmp[0])[0][0]
 
                     if trie_main_id not in shift_dict:
                         shift_dict[trie_main_id] = 0
 
-                    lexem_id = self.main_trie[tmp[2]][shift_dict[trie_main_id]][0]
+                    lexem_id = self.main_trie[tmp[0]][shift_dict[trie_main_id]][0]
                     shift_dict[trie_main_id] += 1
 
-                    self.word_graph.add_vertex(lexem_id, tmp[1])
-                    self.translation_array[lexem_id] = self.reverse_trie[tmp[2]]
+                    word_type = tmp[1].strip("*")[0]
+                    gender_parent_id = None
 
-                    adjective = False
-                    adjective_id = -1
-                    if tmp[1].strip("*")[0] == "C":
-                        adjective = True
-                        adjective_id = child_id
+                    if word_type in ["A", "C", "D"]:
+                        self.word_graph.add_gender_vertex(lexem_id, tmp[1],cases[0] ,genders[0])
+                        gender_parent_id = lexem_id
+                    else:
+                        self.word_graph.add_vertex(lexem_id, tmp[1])
 
-                    for idx, word in enumerate(tmp[3:-1]):
-                        if word != "##":
-                            trie_main_id = self.main_trie.get(word)[0]
+                    self.translation_array[lexem_id] = self.reverse_trie[tmp[0]]
+
+                    for idx, word in enumerate(tmp[2:]):
+                        if word != "##" and word != "#":
+                            trie_main_id = self.main_trie.get(word)[0][0]
                             if trie_main_id not in shift_dict:
                                 shift_dict[trie_main_id] = 0
-                            child_id = self.main_trie[word][shift_dict[trie_main_id]][0]
 
-                            if adjective and (idx + 1) % 7 == 0:
-                                adjective_id = child_id
-
+                            child_id = self.main_trie.get(word)[shift_dict[trie_main_id]][0]
                             shift_dict[trie_main_id] += 1
-                            self.word_graph.add_vertex(child_id, None)
+
+                            if word_type in ["A", "C", "D"]:
+                                if word_type in ["C", "D"] and idx + 1 > 34:
+                                    continue
+
+                                self.word_graph.add_gender_vertex(child_id, None, cases[(idx+1) % 7],genders[(idx+1)//7])
+                                if (idx + 1) % 7 ==0:
+                                    gender_parent_id = child_id
+                                else:
+                                    self.word_graph.add_gender_edge(gender_parent_id, child_id)
+                            else:
+                                self.word_graph.add_vertex(child_id, None)
+
                             self.word_graph.add_edge(lexem_id, child_id)
-
-                            if adjective and (idx + 1) % 7 != 0:
-                                self.word_graph.add_gender_edge(adjective_id, child_id)
-
                             self.translation_array[child_id] = self.reverse_trie[word]
+
 
     def get_parent(self, word: str) -> (str, str, typing.Sequence[str]):
         """
@@ -161,15 +188,14 @@ class Dictionary:
             Args:
                 files ([str]): Array of files names with multisegments
         """
-
         for file in files:
-            with open(file, "r") as f:
+            with open(file, "r", encoding="utf8") as f:
                 for line in f.readlines():
                     tokens = [x.strip() for x in line.split(";")[:-1]]
 
-                    inter = None
+                    interchangeable = None
                     if tokens[3] != "":
-                        inter = [int(tokens[3][0]), int(tokens[3][1])]
+                        interchangeable = [int(tokens[3][0]), int(tokens[3][1])]
 
                     stable_list = []
                     for char in tokens[1]:
@@ -178,25 +204,28 @@ class Dictionary:
                         if char == "-":
                             stable_list.append(True)
 
-                    segment = tokens[0].split(" ")
+                    segment = tokens[0].strip("# ").split(" ")
                     segment_lst = []
-                    for seg in segment:
-                        if "*" in seg:
+                    index = 0
+                    for word in segment:
+                        if "*" in word:
                             continue
 
-                        possible_ids = self.main_trie.get(seg, default=None)
+                        possible_ids = self.main_trie.get(word, default=None)
                         if possible_ids is None:
                             raise ex.Key_Missing
 
                         for word_id in possible_ids:
-                            if self.word_graph.has_gender(word_id[0]) and self.word_graph.get_gender_parent(
-                                    word_id[0]) is not None:
+                            if not stable_list[index] and  (not self.word_graph.has_gender(word_id[0]) or self.word_graph.get_gender_parent(
+                                    word_id[0]) is not None):
                                 continue
                             segment_lst.append(word_id[0])
                             break
+                        if (segment_lst[-1],) not in possible_ids:
+                            raise ex.Key_Missing
 
                     key_tuple = tuple(segment_lst)
-                    self.multisegmented.add_multisegmented(key_tuple, stable_list, inter)
+                    self.multisegmented.add_multisegmented(key_tuple, stable_list, interchangeable)
 
     def get_parent_multisegmented(self, multi_word):
         """
@@ -207,22 +236,26 @@ class Dictionary:
         """
 
         possible_ids_list = []
-        for word in multi_word:
+        for word in multi_word.split():
             possible_ids = self.main_trie.get(word, default=None)
 
+            print(word)
+            print(possible_ids)
+            # print(self.word_graph.get_parent(143))
             if possible_ids is None:
                 raise ex.Key_Missing
 
-            parents = {self.word_graph.get_gender_parent(x[0]) for x in possible_ids if self.word_graph.has_gender(x)}
-            parents.update(
-                {self.word_graph.get_parent(x[0]) for x in possible_ids if not self.word_graph.has_gender(x)})
+            parents = {self.word_graph.get_gender_parent(word_id[0]) for word_id
+                       in possible_ids if self.word_graph.has_gender(word_id[0])}
+            parents.update({self.word_graph.get_parent(word_id[0]) for word_id
+                            in possible_ids if not self.word_graph.has_gender(word_id[0])})
             possible_ids_list.append(parents)
 
         all_combinations = itertools.product(*possible_ids_list)
         for combination in all_combinations:
             if self.multisegmented.is_multisegmented(combination):
                 translated_ids = [self.translation_array[x] for x in combination]
-                return "".join([self.reverse_trie.restore_key(x) for x in
+                return " ".join([self.reverse_trie.restore_key(x) for x in
                                 translated_ids]), self.multisegmented.get_multitsegmented_info(combination)
 
     def get_all_relationships(self):
@@ -293,6 +326,8 @@ class Dictionary:
                 hst_degree = self.main_trie.get(words[2])[0]
                 if hst_degree is None:
                     raise ex.Key_Missing
+
+                print(eq_degree[0], hr_degree[0])
 
                 self.word_graph.add_relationship_edge(eq_degree[0], hr_degree[0], self.lexical_relationships["hr"])
                 self.word_graph.add_relationship_edge(eq_degree[0], hst_degree[0], self.lexical_relationships["hst"])
