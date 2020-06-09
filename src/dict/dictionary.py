@@ -291,8 +291,8 @@ class Dictionary:
                 possible_forms = []
                 stable = self.multisegmented.get_multitsegmented_info(combination)[0]
 
-                print(combination)
-                for combination_position, word_id in enumerate(combination):
+
+                for combination_position,word_id in enumerate(combination):
                     if stable[combination_position]:
                         possible_forms.append([word_id])
                     else:
@@ -300,7 +300,6 @@ class Dictionary:
 
                 children_forms = []
 
-                print(possible_forms)
                 for index in range(max([len(id_list) for id_list in possible_forms])):
                     single_form = []
                     current_flexion = None
@@ -323,8 +322,15 @@ class Dictionary:
                     children_forms.append(single_form)
 
                 translated_ids = [[self.translation_array[x] for x in combination] for combination in children_forms]
-                return [" ".join([self.reverse_trie.restore_key(x) for x in translated_ids_item]) for
-                        translated_ids_item in translated_ids]
+
+                interchangeable = self.multisegmented.get_multitsegmented_info(combination)[1]
+                if interchangeable:
+                    changed_ids = [child.copy() for child in translated_ids]
+                    for list in changed_ids:
+                        list[interchangeable[0]-1],list[interchangeable[1]-1] = list[interchangeable[1]-1],list[interchangeable[0]-1]
+                    translated_ids += changed_ids
+
+                return [" ".join([self.reverse_trie.restore_key(x) for x in translated_ids_item]) for translated_ids_item in translated_ids]
 
     def get_all_relationships(self):
         """
@@ -423,15 +429,22 @@ class Dictionary:
         with codecs.open(file, "r", encoding="utf8") as f:
             for line in f.readlines():
                 words = [word.strip() for word in line.split(":")[:-1]]
-                root_id = self.main_trie.get(words[0])[0]
+                root_id = self.main_trie.get(words[0])[0][0]
 
                 for word in words[2:-1]:
-                    if word != "#":
-                        other_id = self.main_trie.get(word)[0]
-                        self.word_graph.add_relationship_edge(root_id, other_id, self.lexical_relationships[rel_name])
+                    if word != "#" and word != "*":
+                        try:
+                            other_id = self.main_trie.get(word)[0][0]
+                            self.word_graph.add_relationship_edge(root_id, other_id,
+                                                                  self.lexical_relationships[rel_name])
+                        except:
+                            raise ex.Key_Missing(word)
 
-                noun_id = self.main_trie.get(words[-1])[0]
-                self.word_graph.add_relationship_edge(root_id, noun_id, self.lexical_relationships[rel2_name])
+                try:
+                    noun_id = self.main_trie.get(words[-1])[0][0]
+                    self.word_graph.add_relationship_edge(root_id, noun_id, self.lexical_relationships[rel2_name])
+                except:
+                    ex.Key_Missing(words[-1])
 
     def add_generic_relationship(self, file, relationship_name):
         """
@@ -488,6 +501,7 @@ class Dictionary:
         parent_id = self.word_graph.get_parent(word_id)
         if parent_id is None:
             parent_id = word_id
+
 
         parents = {self.word_graph.get_parent(x) for x in check_also}
         rel_id = self.word_graph.get_word_by_relationship(parent_id, rel_index)[0]
