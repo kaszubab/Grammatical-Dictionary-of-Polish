@@ -21,6 +21,29 @@ class DictionaryTests(unittest.TestCase):
         self.assertEqual(test_dict.get_children("Gdańsk"), ['Gdański', 'Gdańska', 'Gdańsków', 'Gdańskowi', 'Gdańskom',
                          'Gdańsk', 'Gdański', 'Gdańskiem', 'Gdańskami', 'Gdańsku', 'Gdańskach', 'Gdańsku', 'Gdański'])
 
+    def test_get_all_relationships(self):
+        test_dict = dictionary.Dictionary(["test_data/pospolite.txt"])
+        test_dict.add_gradation_relationship("test_data/adj.txt")
+        self.assertEqual(test_dict.get_all_relationships(), ['hr', 'hst'])
+
+    def test_get_word_by_relationship(self):
+        test_dict = dictionary.Dictionary(["test_data/pospolite.txt"])
+        test_dict.add_gradation_relationship("test_data/adj.txt")
+        self.assertEqual(test_dict.get_word_by_relationship("hst", "największy"), ('duży', '*CAB', []))
+
+    def test_get_parent_multisegmented(self):
+        test_dict = dictionary.Dictionary(["test_data/pospolite.txt"])
+        test_dict.add_multisegmented(["test_data/WS_test.txt"])
+        self.assertEqual(test_dict.get_parent_multisegmented("złej Apokalipsy"),
+                         ('zła Apokalipsa', [[False, False], None]))
+
+    def test_get_children_multisegmented(self):
+        test_dict = dictionary.Dictionary(["test_data/pospolite.txt"])
+        test_dict.add_multisegmented(["test_data/WS_test.txt"])
+        self.assertEqual(test_dict.get_children_multisegmented("albo Argus"),
+                         ['albo Argusa', 'albo Argusowi', 'albo Argusa', 'albo Argusem', 'albo Argusie',
+                          'albo Argusie'])
+
 
 if __name__ == '__main__':
     unittest.main()
