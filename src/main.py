@@ -7,12 +7,12 @@ if __name__ == '__main__':
     print(dictionary.get_children("albo"))
     print(dictionary.get_children("biały"))
 
-
     print(dictionary.get_parent("psa"))
     dictionary.add_gradation_relationship("adj.txt")
+    dictionary.add_im_norm_relationship("im_nom.txt")
     print(dictionary.get_all_relationships())
     print(dictionary.get_parent("największy"))
-    print(dictionary.get_word_by_relationship("hst", "największy"))
+    print(dictionary.get_word_by_relationship("hr", "większy"))
     dictionary.add_multisegmented(["WS_test.txt"])
 
     print(dictionary.get_parent_multisegmented("złej Apokalipsy"))

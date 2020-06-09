@@ -420,15 +420,22 @@ class Dictionary:
         with codecs.open(file, "r", encoding="utf8") as f:
             for line in f.readlines():
                 words = [word.strip() for word in line.split(":")[:-1]]
-                root_id = self.main_trie.get(words[0])[0]
+                root_id = self.main_trie.get(words[0])[0][0]
 
                 for word in words[2:-1]:
-                    if word != "#":
-                        other_id = self.main_trie.get(word)[0]
-                        self.word_graph.add_relationship_edge(root_id, other_id, self.lexical_relationships[rel_name])
+                    if word != "#" and word != "*":
+                        try:
+                            other_id = self.main_trie.get(word)[0][0]
+                            self.word_graph.add_relationship_edge(root_id, other_id,
+                                                                  self.lexical_relationships[rel_name])
+                        except:
+                            raise ex.Key_Missing(word)
 
-                noun_id = self.main_trie.get(words[-1])[0]
-                self.word_graph.add_relationship_edge(root_id, noun_id, self.lexical_relationships[rel2_name])
+                try:
+                    noun_id = self.main_trie.get(words[-1])[0][0]
+                    self.word_graph.add_relationship_edge(root_id, noun_id, self.lexical_relationships[rel2_name])
+                except:
+                    ex.Key_Missing(words[-1])
 
     def add_generic_relationship(self, file, relationship_name):
         """
@@ -485,6 +492,7 @@ class Dictionary:
         parent_id = self.word_graph.get_parent(word_id)
         if parent_id is None:
             parent_id = word_id
+
 
         parents = {self.word_graph.get_parent(x) for x in check_also}
         rel_id = self.word_graph.get_word_by_relationship(parent_id, rel_index)[0]
