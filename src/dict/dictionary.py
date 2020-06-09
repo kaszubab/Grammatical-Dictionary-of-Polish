@@ -100,7 +100,7 @@ class Dictionary:
                     gender_parent_id = None
 
                     if word_type in ["A", "C", "D"]:
-                        self.word_graph.add_gender_vertex(lexem_id, tmp[1],cases[0] ,genders[0])
+                        self.word_graph.add_gender_vertex(lexem_id, tmp[1], cases[0], genders[0])
                         gender_parent_id = lexem_id
                     else:
                         self.word_graph.add_vertex(lexem_id, tmp[1])
@@ -120,8 +120,9 @@ class Dictionary:
                                 if word_type in ["C", "D"] and idx + 1 > 34:
                                     continue
 
-                                self.word_graph.add_gender_vertex(child_id, None, cases[(idx+1) % 7],genders[(idx+1)//7])
-                                if (idx + 1) % 7 ==0:
+                                self.word_graph.add_gender_vertex(child_id, None, cases[(idx + 1) % 7],
+                                                                  genders[(idx + 1) // 7])
+                                if (idx + 1) % 7 == 0:
                                     gender_parent_id = child_id
                                 else:
                                     self.word_graph.add_gender_edge(gender_parent_id, child_id)
@@ -131,6 +132,10 @@ class Dictionary:
                             self.word_graph.add_edge(lexem_id, child_id)
                             self.translation_array[child_id] = self.reverse_trie[word]
 
+    def __eq__(self, other):
+        return self.main_trie == other.main_trie \
+               and self.reverse_trie == other.reverse_trie \
+               and self.translation_array == other.translation_array
 
     def get_parent(self, word: str) -> (str, str, typing.Sequence[str]):
         """
@@ -216,8 +221,9 @@ class Dictionary:
                             raise ex.Key_Missing
 
                         for word_id in possible_ids:
-                            if not stable_list[index] and  (not self.word_graph.has_gender(word_id[0]) or self.word_graph.get_gender_parent(
-                                    word_id[0]) is not None):
+                            if not stable_list[index] and (
+                                    not self.word_graph.has_gender(word_id[0]) or self.word_graph.get_gender_parent(
+                                word_id[0]) is not None):
                                 continue
                             segment_lst.append(word_id[0])
                             break
@@ -253,7 +259,7 @@ class Dictionary:
             if self.multisegmented.is_multisegmented(combination):
                 translated_ids = [self.translation_array[x] for x in combination]
                 return " ".join([self.reverse_trie.restore_key(x) for x in
-                                translated_ids]), self.multisegmented.get_multitsegmented_info(combination)
+                                 translated_ids]), self.multisegmented.get_multitsegmented_info(combination)
 
     def get_children_multisegmented(self, multi_word):
         """
@@ -271,12 +277,13 @@ class Dictionary:
                 raise ex.Key_Missing
 
             parents = ({word_id[0] for word_id in possible_ids
-                        if self.word_graph.has_gender(word_id[0]) and self.word_graph.get_gender_parent(word_id[0]) is None})
+                        if self.word_graph.has_gender(word_id[0]) and self.word_graph.get_gender_parent(
+                    word_id[0]) is None})
             parents.update({word_id[0] for word_id in possible_ids
-                            if not self.word_graph.has_gender(word_id[0]) and self.word_graph.get_parent(word_id[0]) is None})
+                            if not self.word_graph.has_gender(word_id[0]) and self.word_graph.get_parent(
+                    word_id[0]) is None})
 
             possible_ids_list.append(parents)
-
 
         all_combinations = itertools.product(*possible_ids_list)
         for combination in all_combinations:
@@ -285,7 +292,7 @@ class Dictionary:
                 stable = self.multisegmented.get_multitsegmented_info(combination)[0]
 
                 print(combination)
-                for combination_position,word_id in enumerate(combination):
+                for combination_position, word_id in enumerate(combination):
                     if stable[combination_position]:
                         possible_forms.append([word_id])
                     else:
@@ -299,29 +306,25 @@ class Dictionary:
                     current_flexion = None
                     for position, current_possible_id_list in enumerate(possible_forms):
                         if not stable[position]:
-                            current = current_possible_id_list[index%len(current_possible_id_list)]
+                            current = current_possible_id_list[index % len(current_possible_id_list)]
                             if current_flexion is None:
                                 single_form.append(current)
                             else:
                                 num = index
                                 while self.word_graph.get_inflection(current) != current_flexion:
                                     num += 1
-                                    current = current_possible_id_list[num%len(current_possible_id_list)]
+                                    current = current_possible_id_list[num % len(current_possible_id_list)]
                                     if num == max([len(id_list) for id_list in possible_forms]):
                                         break
                                 single_form.append(current)
                         else:
-                            single_form.append(current_possible_id_list[index%len(current_possible_id_list)])
+                            single_form.append(current_possible_id_list[index % len(current_possible_id_list)])
 
                     children_forms.append(single_form)
 
                 translated_ids = [[self.translation_array[x] for x in combination] for combination in children_forms]
-                return [" ".join([self.reverse_trie.restore_key(x) for x in translated_ids_item]) for translated_ids_item in translated_ids]
-
-
-
-
-
+                return [" ".join([self.reverse_trie.restore_key(x) for x in translated_ids_item]) for
+                        translated_ids_item in translated_ids]
 
     def get_all_relationships(self):
         """
@@ -330,7 +333,7 @@ class Dictionary:
             Returns:
                 relationship_names (list(str)): List of relationships names
         """
-        return list(self.lexical_relationships.keys());
+        return list(self.lexical_relationships.keys())
 
     def __add_new_relationship__(self, relationship_name):
         """
