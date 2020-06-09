@@ -106,6 +106,11 @@ class Dictionary:
 
                             self.translation_array[child_id] = self.reverse_trie[word]
 
+    def __eq__(self, other):
+        return self.main_trie == other.main_trie \
+               and self.reverse_trie == other.reverse_trie \
+               and self.translation_array == other.translation_array
+
     def get_parent(self, word: str) -> (str, str, typing.Sequence[str]):
         """
         Function that returns an infinitive of a word
